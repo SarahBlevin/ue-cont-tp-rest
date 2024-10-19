@@ -3,6 +3,7 @@
 This is a small application that manages film reservations for users at a local cinema. The application is composed of 4 micro-services, and the entrypoint for users is the User service. From there, users can consult information about the films on air at their local cinema, rate them, and book reservations online.
 
 All microservices interact using REST API.
+
 ![image](https://github.com/user-attachments/assets/f58139b0-d626-48c7-b6ed-f31d6956e994)
 
 
