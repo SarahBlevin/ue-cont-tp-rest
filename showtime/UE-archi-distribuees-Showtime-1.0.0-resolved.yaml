@@ -1,0 +1,118 @@
+---
+openapi: 3.0.3
+info:
+  title: Showtime API
+  description: This is the API of the Showtime service, which manages the database showtime.json and provides endpoints to access and modify the showtime data. The database contains information about the movies dates.
+  contact:
+    email: sarah.blevin@imt-atlantique.net
+  license:
+    name: GPL v3
+    url: https://www.gnu.org/licenses/gpl-3.0.en.html
+  version: 1.0.0
+tags:
+- name: admins
+  description: Secured Admin-only calls
+- name: developers
+  description: Operations available to regular developers
+paths:
+  /:
+    get:
+      tags:
+      - developers
+      summary: Home page of the service
+      operationId: home
+      responses:
+        "200":
+          description: Displays the homepage of the Showtime service.
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<h1 style='color:blue'>Welcome to the Showtime service!</h1>"
+  /showtimes:
+    get:
+      tags:
+      - developers
+      summary: Get the full JSON database
+      operationId: get_schedule
+      responses:
+        "200":
+          description: Full JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllSchedule'
+  /showmovies/{date}:
+    get:
+      tags:
+      - developers
+      summary: Get the schedule by date
+      operationId: get_movies_bydate
+      parameters:
+      - name: date
+        in: path
+        description: Date in YYYYMMDD format.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          example: "20231002"
+      responses:
+        "200":
+          description: Schedule for the specified date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        "400":
+          description: Date not found
+  /help:
+    get:
+      tags:
+      - developers
+      summary: List all available endpoints
+      description: Returns a list of all the available API endpoints.
+      operationId: help
+      responses:
+        "200":
+          description: A JSON object containing all available endpoints.
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  "/": 
+                    methods: "GET"
+                    endpoint: "home"
+                  "/showtimes": 
+                    methods: "GET"
+                    endpoint: "get_schedule"
+                  "/showmovies/{date}": 
+                    methods: "GET"
+                    endpoint: "get_movies_bydate"
+components:
+  schemas:
+    AllSchedule:
+      required:
+      - schedule
+      type: object
+      properties:
+        schedule:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule'
+    Schedule:
+      required:
+      - date
+      - movies
+      type: object
+      properties:
+        date:
+          type: string
+          example: "20231002"
+        movies:
+          type: array
+          items:
+            type: string
+            example: "720d006c-3a57-4b6a-b18f-9b713b073f3c"
