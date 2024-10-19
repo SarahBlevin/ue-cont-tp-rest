@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: Booking API
+  description: |
+    This is the API for the Booking service, which manages the database `bookings.json` and provides endpoints to access and modify booking data. The database contains information about user reservations for movies on specific dates.
+  contact:
+    email: sarah.blevin@imt-atlantique.net
+  license:
+    name: GPL v3
+    url: https://www.gnu.org/licenses/gpl-3.0.en.html
+  version: 1.1.0
+tags:
+- name: admins
+  description: Endpoints restricted to admin users
+- name: developers
+  description: Endpoints available to regular developers
+paths:
+  /:
+    get:
+      tags:
+      - developers
+      summary: Home page of the service
+      description: Displays a welcome message.
+      operationId: home
+      responses:
+        "200":
+          description: Welcome message
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<h1 style='color:blue'>Welcome to the Booking service!</h1>"
+  /bookings:
+    get:
+      tags:
+      - developers
+      summary: Get the full JSON database
+      description: Retrieves the full bookings database as a JSON response.
+      operationId: get_json
+      responses:
+        "200":
+          description: Full bookings database in JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllBookings'
+  /bookings/{userid}:
+    get:
+      tags:
+      - developers
+      summary: Get bookings for a specific user by user ID
+      description: Retrieves all bookings associated with a given user ID.
+      operationId: get_bookings_for_user
+      parameters:
+      - name: userid
+        in: path
+        description: The ID of the user whose bookings are being retrieved.
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Bookings of the specified user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingsUser'
+        "400":
+          description: User ID not found
+    post:
+      tags:
+      - admins
+      summary: Add a booking for a user
+      description: |
+        Adds a booking for the user. Validity checks include whether the movie is available on the requested date. Uses the Showtime service to validate the booking.
+      operationId: add_booking_byuser
+      parameters:
+      - name: userid
+        in: path
+        description: The ID of the user for whom the booking is being added.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Details of the movie booking.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewMovie'
+      responses:
+        "200":
+          description: Booking successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingsUser'
+        "409":
+          description: User already has a booking for this movie on this date
+        "411":
+          description: Movie is not available on the requested date
+        "412":
+          description: Date does not exist
+  /bookings/moviesbydate/{date}:
+    get:
+      tags:
+      - developers
+      summary: Get movies available on a specific date
+      description: |
+        Retrieves the movies available on a given date by calling the Showtime service.
+      operationId: get_movies_by_date
+      parameters:
+      - name: date
+        in: path
+        description: The date for which the available movies are being retrieved.
+        required: true
+        schema:
+          type: string
+          example: "20240101"
+      responses:
+        "200":
+          description: Movies available on the given date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  movies:
+                    type: array
+                    items:
+                      type: string
+                      example: "276c79ec-a26a-40a6-b3d3-fb242a5947b6"
+        "404":
+          description: No movies available on this date
+  /help:
+    get:
+      tags:
+      - developers
+      summary: List available API endpoints
+      description: Returns a list of all available endpoints in the Booking service.
+      operationId: help
+      responses:
+        "200":
+          description: List of available API endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    methods:
+                      type: string
+                      example: GET, POST
+                    endpoint:
+                      type: string
+                      example: home
+components:
+  schemas:
+    AllBookings:
+      type: array
+      items:
+        $ref: '#/components/schemas/BookingsUser'
+    BookingsUser:
+      type: object
+      required:
+        - userid
+        - dates
+      properties:
+        userid:
+          type: string
+          example: "chris_rivers"
+        dates:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateItem'
+    DateItem:
+      type: object
+      required:
+        - date
+        - movies
+      properties:
+        date:
+          type: string
+          example: "20240101"
+        movies:
+          type: array
+          items:
+            type: string
+            example: "276c79ec-a26a-40a6-b3d3-fb242a5947b6"
+    NewMovie:
+      type: object
+      required:
+        - date
+        - movieid
+      properties:
+        date:
+          type: string
+          example: "20240101"
+        movieid:
+          type: string
+          example: "276c79ec-a26a-40a6-b3d3-fb242a5947b6"
