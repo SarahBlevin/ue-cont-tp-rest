@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: Movie API
+  description: This is the API of the Movie service, which manages the database movies.json and provides endpoints to access and modify the movies data. The database contains information about the movies.
+  contact:
+    name: Clement Monaco, Sarah Blevin
+    email: sarah.blevin@imt-atlantique.net
+  license:
+    name: GPL v3
+    url: https://www.gnu.org/licenses/gpl-3.0.en.html
+  version: 1.0.0
+tags:
+- name: admins
+  description: Secured Admin-only calls
+- name: developers
+  description: Operations available to regular developers
+paths:
+  /:
+    get:
+      tags:
+      - developers
+      summary: home page of the service
+      description: |
+        Displays the Movies micro-service homepage.
+      operationId: home
+      responses:
+        "200":
+          description: welcome message
+          content:
+            text/html:
+              schema:
+                type: string
+                example: <h1 style='color:blue'>Welcome to the Movie service!</h1>
+  /json:
+    get:
+      tags:
+      - developers
+      summary: get the full JSON database
+      description: |
+        Displays the entire data stored in the database in json format.
+      operationId: get_json
+      responses:
+        "200":
+          description: full JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllMovies'
+  /movies/{movieid}:
+    get:
+      tags:
+      - developers
+      summary: get the movie by its id
+      description: By passing in the id, you can get info on a specific Movie
+      operationId: get_movie_byid
+      parameters:
+      - name: movieid
+        in: path
+        description: Movie ID.
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Movie description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieItem'
+        "400":
+          description: bad input parameter
+    post:
+      tags:
+      - admins
+      summary: add a movie item
+      description: Adds a movie to the application database
+      operationId: create_movie
+      parameters:
+      - name: movieid
+        in: path
+        description: Movie ID.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: Movie item to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieItem'
+      responses:
+        "200":
+          description: Movie created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieItem'
+        "409":
+          description: an existing item already exists
+    delete:
+      tags:
+      - admins
+      summary: delete a movie item
+      description: Deletes a movie from the application database.
+      operationId: del_movie
+      parameters:
+      - name: movieid
+        in: path
+        description: Movie ID.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: item deleted
+        "400":
+          description: ID not found
+  /moviesbytitle:
+    get:
+      tags:
+      - developers
+      summary: get the movie by its title
+      description: |
+        By passing in the title, you can get info on a specific Movie
+      operationId: get_movie_bytitle
+      parameters:
+      - name: title
+        in: query
+        description: pass a title
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Movie item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieItem'
+        "400":
+          description: bad input parameter
+  /movietitlebyid:
+    get:
+      tags:
+      - developers
+      summary: get the movie title by its id
+      description: By passing in the id, you can get the title of a specific movie
+      operationId: get_movietitle_byid
+      parameters:
+      - name: id
+        in: query
+        description: Movie ID.
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Movie title
+          content:
+            application/json:
+              schema:
+                type: string
+                example: The Martian
+        "400":
+          description: Movie ID not found
+  /movies/{movieid}/{rate}:
+    put:
+      tags:
+      - admins
+      summary: update a movie rate
+      description: Updates the rating of a given movie
+      operationId: update_movie_rating
+      parameters:
+      - name: movieid
+        in: path
+        description: Movie ID.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: rate
+        in: path
+        description: Movie rating.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          maximum: 10
+          minimum: 0
+          type: integer
+      responses:
+        "200":
+          description: rate updated
+        "400":
+          description: movie ID not found
+  /movies/by_rating:
+    get:
+      tags:
+      - developers
+      summary: get movies by rating
+      description: Retrieve all movies with a rating equal to or above the provided value
+      operationId: get_movies_by_rating
+      parameters:
+      - name: min_rating
+        in: query
+        description: minimum rating filter
+        required: true
+        schema:
+          type: number
+          format: float
+          example: 7.5
+      responses:
+        "200":
+          description: List of movies with rating >= min_rating
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieItem'
+        "400":
+          description: Minimum rating not provided
+        "404":
+          description: No movies found with that rating or higher
+  /movies/by_director:
+    get:
+      tags:
+      - developers
+      summary: get movies by director
+      description: Retrieve all movies directed by the provided director's name
+      operationId: get_movies_by_director
+      parameters:
+      - name: director
+        in: query
+        description: Director's name
+        required: true
+        schema:
+          type: string
+          example: Ridley Scott
+      responses:
+        "200":
+          description: List of movies by the given director
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieItem'
+        "400":
+          description: Director name not provided
+        "404":
+          description: No movies found for this director
+  /help:
+    get:
+      tags:
+      - developers
+      summary: list all available endpoints
+      description: Retrieve a list of all available endpoints for this service
+      operationId: help
+      responses:
+        "200":
+          description: List of endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    methods:
+                      type: string
+                    endpoint:
+                      type: string
+components:
+  schemas:
+    AllMovies:
+      type: object
+      required:
+        - movies
+      properties:
+        movies:
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/MovieItem'
+    MovieItem:
+      type: object
+      required:
+        - title
+        - rating
+        - director
+        - id
+      properties:
+        title:
+          type: string
+          example: The Martian
+        rating:
+          type: integer
+          example: 7
+        director:
+          type: string
+          example: Ridley Scott
+        id:
+          type: string
+          example: 39ab85e5-5e8e-4dc5-afea-65dc368bd7ab
