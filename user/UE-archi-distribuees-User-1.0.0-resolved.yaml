@@ -1,0 +1,375 @@
+openapi: '3.0.3'
+info:
+  title: User API
+  description: |
+    This is the entrypoint for users - the API of the User service. It manages the `user.json` database and provides endpoints for users to get information on movies, check dates, book movies, and manage user information.
+    The API also interacts with other services such as the Movie and Booking services.
+  contact:
+    email: sarah.blevin@imt-atlantique.net
+  license:
+    name: GPL v3
+    url: https://www.gnu.org/licenses/gpl-3.0.en.html
+  version: 1.1.1
+tags:
+  - name: admins
+    description: Secured Admin-only calls
+  - name: developers
+    description: Operations available to regular developers
+paths:
+  /:
+    get:
+      tags:
+        - developers
+      summary: Home page of the service
+      description: Displays the welcome page for the User service.
+      operationId: home
+      responses:
+        "200":
+          description: Welcome message
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<h1 style='color:blue'>Welcome to the User service!</h1>"
+
+  /users:
+    get:
+      tags:
+        - developers
+      summary: Get the full JSON database
+      description: Retrieves the full list of users from the `users.json` database.
+      operationId: get_users
+      responses:
+        "200":
+          description: Full JSON of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllUsers'
+
+  /user/{userid}:
+    get:
+      tags:
+        - developers
+      summary: Get user info by ID
+      description: Retrieve detailed information about a specific user by their user ID.
+      operationId: get_user_byid
+      parameters:
+        - name: userid
+          in: path
+          description: User ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "400":
+          description: User ID not found
+
+  /userbookings/{userid}:
+    get:
+      tags:
+        - developers
+      summary: Get user bookings by ID
+      description: Retrieves all bookings for a user by their user ID.
+      operationId: get_bookings_by_userid
+      parameters:
+        - name: userid
+          in: path
+          description: User ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bookings of the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingsUser'
+        "404":
+          description: User not found in bookings
+
+    post:
+      tags:
+        - admins
+      summary: Add a booking for a user
+      description: Adds a booking for a user after checking the movie and booking details.
+      operationId: add_booking_byuser
+      parameters:
+        - name: userid
+          in: path
+          description: User ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: New booking details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewMovie'
+      responses:
+        "200":
+          description: Booking successfully added
+        "410":
+          description: Booking could not be added
+
+  /moviesbyuser/{userid}:
+    get:
+      tags:
+        - developers
+      summary: Get user movie info by ID
+      description: Retrieves information about movies a user has booked by passing in the user ID.
+      operationId: get_movies_by_userid
+      parameters:
+        - name: userid
+          in: path
+          description: User ID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Movie information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllMovies'
+        "404":
+          description: User not found in bookings
+
+  /moviebyid/{movieid}:
+    get:
+      tags:
+        - developers
+      summary: Get movie information by ID
+      description: Retrieves detailed information about a movie by its movie ID.
+      operationId: get_movie_info_by_id
+      parameters:
+        - name: movieid
+          in: path
+          description: Movie ID to retrieve information about.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Movie information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieItem'
+        "404":
+          description: Movie ID not found
+
+  /moviesbydate/{date}:
+    get:
+      tags:
+        - developers
+      summary: Get movies on a specific date
+      description: Retrieves the list of movies scheduled on a specific date.
+      operationId: get_movies_by_date
+      parameters:
+        - name: date
+          in: path
+          description: 'Date of the movies to retrieve (format: YYYYMMDD)'
+          required: true
+          schema:
+            type: string
+            example: "20240125"
+      responses:
+        "200":
+          description: Movies on that date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllMovies'
+        "404":
+          description: No movies found for the specified date
+
+  /useraddmovie/{movieid}:
+    post:
+      tags:
+        - admins
+      summary: Add a movie
+      description: Adds a new movie to the movie system by its movie ID.
+      operationId: add_movie_byuser
+      parameters:
+        - name: movieid
+          in: path
+          description: Movie ID.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: New movie details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieItem'
+      responses:
+        "200":
+          description: Movie successfully added
+        "405":
+          description: Movie already exists
+
+  /adduser/{username}:
+    post:
+      tags:
+        - admins
+      summary: Add a new user
+      description: Adds a new user by providing a username.
+      operationId: add_user
+      parameters:
+        - name: username
+          in: path
+          description: Username to add.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User successfully added
+        "409":
+          description: User already exists
+
+  /usermovies/{movieid}/{rate}:
+    put:
+      tags:
+        - admins
+      summary: Update a movie rating
+      description: Updates the rating of a movie by its movie ID.
+      operationId: update_movie_rating
+      parameters:
+        - name: movieid
+          in: path
+          description: Movie ID.
+          required: true
+          schema:
+            type: string
+        - name: rate
+          in: path
+          description: New movie rating (0-10).
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10
+      responses:
+        "200":
+          description: Movie rating successfully updated
+        "409":
+          description: Movie ID not found
+
+  /help:
+    get:
+      tags:
+        - developers
+      summary: API help and usage
+      description: Provides help information for this API, including available endpoints and their methods.
+      operationId: get_help
+      responses:
+        "200":
+          description: Help information provided
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  "/": {"methods": "GET", "endpoint": "home"}
+                  "/users": {"methods": "GET", "endpoint": "get_users"}
+
+components:
+  schemas:
+    AllUsers:
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
+    User:
+      required:
+        - username
+        - userid
+        - last_active
+      type: object
+      properties:
+        userid:
+          type: string
+          example: chris_rivers
+        username:
+          type: string
+          example: Chris Rivers
+        last_active:
+          type: integer
+          example: 1360031225
+    BookingsUser:
+      required:
+        - dates
+        - userid
+      type: object
+      properties:
+        userid:
+          type: string
+          example: chris_rivers
+        dates:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateItem'
+    DateItem:
+      required:
+        - date
+        - movies
+      type: object
+      properties:
+        date:
+          type: string
+          example: "20151201"
+        movies:
+          type: array
+          items:
+            type: string
+            example: 276c79ec-a26a-40a6-b3d3-fb242a5947b6
+    NewMovie:
+      required:
+        - date
+        - movieid
+        - rating
+      type: object
+      properties:
+        date:
+          type: string
+          example: "20151201"
+        movieid:
+          type: string
+          example: 276c79ec-a26a-40a6-b3d3-fb242a5947b6
+        rating:
+          type: integer
+          example: 9
+    AllMovies:
+      type: array
+      items:
+        $ref: '#/components/schemas/MovieItem'
+    MovieItem:
+      required:
+        - movieid
+        - title
+        - genre
+      type: object
+      properties:
+        movieid:
+          type: string
+          example: 276c79ec-a26a-40a6-b3d3-fb242a5947b6
+        title:
+          type: string
+          example: "Inception"
+        genre:
+          type: string
+          example: "Science Fiction"
+        rating:
+          type: integer
+          example: 9
