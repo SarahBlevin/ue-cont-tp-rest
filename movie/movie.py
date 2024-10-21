@@ -130,7 +130,7 @@ def get_movies_by_rating():
     if min_rating is None:
         return make_response(jsonify({"error": "Minimum rating is required"}), 400)
 
-    filtered_movies = [movie for movie in movies if movie["rating"] >= min_rating]
+    filtered_movies = [movie for movie in movies if float(movie["rating"]) >= min_rating]
     return make_response(jsonify(filtered_movies), 200) if filtered_movies else make_response(jsonify({"error": "No movies found with that rating or higher"}), 404)
 
 # get movies by director

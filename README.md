@@ -13,7 +13,7 @@ Run movie service : cd ./UE-AD-A1-MIXTE/movie python movie.py
 
 Run showtime service : cd ./UE-AD-A1-MIXTE/showtime python showtime.py
 
-Run booking service : cd ./UE-AD-A1-MIXTE/booking python bookingServer.py
+Run booking service : cd ./UE-AD-A1-MIXTE/booking python booking.py
 
 Run user service : cd ./UE-AD-A1-MIXTE/user python user.py
 
